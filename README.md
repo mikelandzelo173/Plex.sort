@@ -48,6 +48,7 @@ Select a playlist to sort: 3
   1: Sort by title, descending
   2: Sort by sorting title, ascending
   3: Sort by sorting title, descending
+  4: Shuffle randomly
 
 Select sorting method: 0
 

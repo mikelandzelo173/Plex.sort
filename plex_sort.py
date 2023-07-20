@@ -38,6 +38,7 @@ https://github.com/uswemar/PlexPlaylistSorter
 """
 
 import os
+import random
 import sys
 
 from getpass import getpass
@@ -51,10 +52,10 @@ from plexapi.utils import choose
 
 
 __author__ = "Michael Pölzl"
-__copyright__ = "Copyright 2022, Michael Pölzl"
+__copyright__ = "Copyright 2022-2023, Michael Pölzl"
 __credits__ = ""
 __license__ = "GPL"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __maintainer__ = "Michael Pölzl"
 __email__ = "git@michaelpoelzl.at"
 __status__ = "Production"
@@ -132,6 +133,11 @@ def choose_sorting_method() -> tuple:
             "name": "Sort by sorting title, descending",
             "key": "titleSort",
             "reverse": True,
+        },
+        {
+            "name": "Shuffle randomly",
+            "key": "shuffle",
+            "reverse": False,
         },
     ]
 
@@ -259,7 +265,7 @@ def sort_playlist(
     :type server: PlexServer
     :param playlist: Playlist object
     :type playlist: Playlistobject
-    :param sort_key: The object key you want to sort the playlist by. Choices are title and titleSort.
+    :param sort_key: The object key you want to sort the playlist by. Choices are title, titleSort and shuffle.
     :type sort_key: str
     :param sort_reverse: Whether you want to sort the playlist in reverse order
     :type sort_reverse: bool
@@ -271,7 +277,10 @@ def sort_playlist(
 
     # Get all items and sort them
     items = playlist.items()
-    items.sort(key=lambda x: getattr(x, sort_key), reverse=sort_reverse)
+    if sort_key == "shuffle":
+        random.shuffle(items)
+    else:
+        items.sort(key=lambda x: getattr(x, sort_key), reverse=sort_reverse)
 
     print()
 
