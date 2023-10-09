@@ -103,43 +103,69 @@ def choose_duplication() -> bool:
             return False
 
 
-def choose_sorting_method() -> tuple:
+def choose_sorting_method(playlist: Playlist) -> tuple:
     """
     Function: choose_sorting_method()
 
     Decide on how to sort the selected playlist.
 
-    :returns: A tuple with the key and direction to sort
+    :returns: A tuple with the key, backup key and direction to sort. The backup key can be used if the main key may be of type NoneType.
     :rtype: tuple
     """
 
+    playlist_type = playlist.playlistType
+
     choices = [
         {
-            "name": "Sort by title, ascending",
+            "name": "Title",
             "key": "title",
-            "reverse": False,
         },
         {
-            "name": "Sort by title, descending",
-            "key": "title",
-            "reverse": True,
-        },
-        {
-            "name": "Sort by sorting title, ascending",
+            "name": "Sorting title",
             "key": "titleSort",
-            "reverse": False,
-        },
-        {
-            "name": "Sort by sorting title, descending",
-            "key": "titleSort",
-            "reverse": True,
-        },
-        {
-            "name": "Shuffle randomly",
-            "key": "shuffle",
-            "reverse": False,
         },
     ]
+
+    if playlist_type == "audio":
+        choices.extend(
+            [
+                {
+                    "name": "Artist name",
+                    "key": "originalTitle",
+                    "backup_key": "grandparentTitle",
+                },
+                {
+                    "name": "Album artist name",
+                    "key": "grandparentTitle",
+                },
+                {
+                    "name": "Album name",
+                    "key": "parentTitle",
+                },
+            ]
+        )
+    elif playlist_type == "video":
+        choices.extend(
+            [
+                {
+                    "name": "Release year",
+                    "key": "year",
+                },
+            ]
+        )
+
+    choices.extend(
+        [
+            {
+                "name": "Duration",
+                "key": "duration",
+            },
+            {
+                "name": "Shuffle randomly",
+                "key": "shuffle",
+            },
+        ]
+    )
 
     print()
     for index, choice in enumerate(choices):
@@ -148,11 +174,40 @@ def choose_sorting_method() -> tuple:
 
     while True:
         try:
-            method = input("Select sorting method: ")
+            method = input(f"Select sorting key for this {playlist_type} playlist: ")
             selected_choice = choices[int(method)]
-            return selected_choice["key"], selected_choice["reverse"]
+            break
         except (ValueError, IndexError):
             pass
+
+    if selected_choice["key"] == "shuffle":
+        return selected_choice["key"], False
+
+    sorting_choices = [
+        {
+            "name": "Sort ascending",
+            "reverse": False,
+        },
+        {
+            "name": "Sort descending",
+            "reverse": True,
+        },
+    ]
+
+    print()
+    for sorting_index, sorting_choice in enumerate(sorting_choices):
+        print(f"  {sorting_index}: {sorting_choice['name']}")
+    print()
+
+    while True:
+        try:
+            sorting_method = input(f"Select sorting direction for {selected_choice['name']}: ")
+            selected_sorting_choice = sorting_choices[int(sorting_method)]
+            break
+        except (ValueError, IndexError):
+            pass
+
+    return selected_choice["key"], selected_choice.get("backup_key", selected_choice["key"]), selected_sorting_choice["reverse"]
 
 
 def get_account(config: PlexConfig) -> MyPlexAccount:
@@ -253,6 +308,7 @@ def sort_playlist(
         server: PlexServer,
         playlist: Playlist,
         sort_key: str = "title",
+        backup_sort_key: str = "title",
         sort_reverse: bool = False,
         duplicate: bool = False
 ) -> Playlist:
@@ -265,8 +321,10 @@ def sort_playlist(
     :type server: PlexServer
     :param playlist: Playlist object
     :type playlist: Playlistobject
-    :param sort_key: The object key you want to sort the playlist by. Choices are title, titleSort and shuffle.
+    :param sort_key: The object key you want to sort the playlist by. Available choices depend on the type of media the playlist contains.
     :type sort_key: str
+    :param backup_sort_key: The backup object key to sort the playlist by if the sort_key may be of type NoneType. Mandatory for sorting by artist.
+    :type backup_sort_key: str
     :param sort_reverse: Whether you want to sort the playlist in reverse order
     :type sort_reverse: bool
     :param duplicate: Whether you want to create a duplicated playlist instead of modifying the selected one
@@ -280,7 +338,7 @@ def sort_playlist(
     if sort_key == "shuffle":
         random.shuffle(items)
     else:
-        items.sort(key=lambda x: getattr(x, sort_key), reverse=sort_reverse)
+        items.sort(key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key), reverse=sort_reverse)
 
     print()
 
@@ -328,7 +386,7 @@ if __name__ == '__main__':
         playlist = choose("Select a playlist to sort", playlists, "title")
 
         # Select the sorting method
-        sort_key, sort_reverse = choose_sorting_method()
+        sort_key, backup_sort_key, sort_reverse = choose_sorting_method(playlist)
 
         # Decide on duplicating the selected playlist
         duplicate = choose_duplication()
@@ -338,6 +396,7 @@ if __name__ == '__main__':
             server=server,
             playlist=playlist,
             sort_key=sort_key,
+            backup_sort_key=backup_sort_key,
             sort_reverse=sort_reverse,
             duplicate=duplicate,
         )
