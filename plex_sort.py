@@ -181,7 +181,7 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
             pass
 
     if selected_choice["key"] == "shuffle":
-        return selected_choice["key"], False
+        return selected_choice["key"], selected_choice["key"], False
 
     sorting_choices = [
         {
