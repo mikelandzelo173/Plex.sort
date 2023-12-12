@@ -27,8 +27,7 @@ Servers that host playlists. If there is only one Plex Media Server available, t
 
 After that, you must select a playlist to sort. Please note that smart playlists must not be altered and therefore are
 not listed. You can also determine if you want to edit the selected playlist or create a new and sorted one based on
-the playlist you just selected. You can also decide by which key and direction it should be sorted and if you want to
-create a new duplicated playlist instead of modifying the selected one.
+the playlist you just selected. You can also decide by which key and direction it should be sorted.
 
 For more information on the Python PlexAPI visit:
 https://python-plexapi.readthedocs.io/en/latest/index.html
@@ -55,7 +54,7 @@ __author__ = "Michael Pölzl"
 __copyright__ = "Copyright 2022-2023, Michael Pölzl"
 __credits__ = ""
 __license__ = "GPL"
-__version__ = "1.1.0"
+__version__ = "1.2.2"
 __maintainer__ = "Michael Pölzl"
 __email__ = "git@michaelpoelzl.at"
 __status__ = "Production"
@@ -315,7 +314,7 @@ def sort_playlist(
     """
     Function: sort_playlist()
 
-    Returns all resources connected to a MyPlexAccount, filtered by type. Only "Plex Media Server" items are returned.
+    Sorts tracks in a playlist by user-defined parameters.
 
     :param server: PlexServer object
     :type server: PlexServer
