@@ -54,7 +54,7 @@ __author__ = "Michael Pölzl"
 __copyright__ = "Copyright 2022-2023, Michael Pölzl"
 __credits__ = ""
 __license__ = "GPL"
-__version__ = "1.2.2"
+__version__ = "1.3.0"
 __maintainer__ = "Michael Pölzl"
 __email__ = "git@michaelpoelzl.at"
 __status__ = "Production"
@@ -118,10 +118,14 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
         {
             "name": "Title",
             "key": "title",
+            "secondary_key": "originalTitle",
+            "secondary_backup_key": "grandparentTitle",
         },
         {
             "name": "Sorting title",
             "key": "titleSort",
+            "secondary_key": "originalTitle",
+            "secondary_backup_key": "grandparentTitle",
         },
     ]
 
@@ -132,14 +136,18 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
                     "name": "Artist name",
                     "key": "originalTitle",
                     "backup_key": "grandparentTitle",
+                    "secondary_key": "title",
                 },
                 {
                     "name": "Album artist name",
                     "key": "grandparentTitle",
+                    "secondary_key": "title",
                 },
                 {
                     "name": "Album name",
                     "key": "parentTitle",
+                    "secondary_key": "originalTitle",
+                    "secondary_backup_key": "grandparentTitle",
                 },
             ]
         )
@@ -149,6 +157,7 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
                 {
                     "name": "Release year",
                     "key": "year",
+                    "secondary_key": "title",
                 },
             ]
         )
@@ -158,6 +167,7 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
             {
                 "name": "Duration",
                 "key": "duration",
+                "secondary_key": "title",
             },
             {
                 "name": "Shuffle randomly",
@@ -206,7 +216,13 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
         except (ValueError, IndexError):
             pass
 
-    return selected_choice["key"], selected_choice.get("backup_key", selected_choice["key"]), selected_sorting_choice["reverse"]
+    return (
+        selected_choice["key"],
+        selected_choice.get("backup_key", selected_choice["key"]),
+        selected_choice.get("secondary_key", selected_choice["key"]),
+        selected_choice.get("secondary_backup_key", selected_choice["key"]),
+        selected_sorting_choice["reverse"],
+    )
 
 
 def get_account(config: PlexConfig) -> MyPlexAccount:
@@ -308,6 +324,8 @@ def sort_playlist(
         playlist: Playlist,
         sort_key: str = "title",
         backup_sort_key: str = "title",
+        secondary_sort_key: str = "title",
+        backup_secondary_sort_key: str = "title",
         sort_reverse: bool = False,
         duplicate: bool = False
 ) -> Playlist:
@@ -324,6 +342,10 @@ def sort_playlist(
     :type sort_key: str
     :param backup_sort_key: The backup object key to sort the playlist by if the sort_key may be of type NoneType. Mandatory for sorting by artist.
     :type backup_sort_key: str
+    :param secondary_sort_key: The secondary object key you want to sort the playlist by after it has already been sorted by the sort_key, e.g. the track artist after sorting the list by track title to group them together. Only viable for audio playlists.
+    :type secondary_sort_key: str
+    :param backup_secondary_sort_key: The backup object key for the secondary_sort_key.
+    :type backup_secondary_sort_key: str
     :param sort_reverse: Whether you want to sort the playlist in reverse order
     :type sort_reverse: bool
     :param duplicate: Whether you want to create a duplicated playlist instead of modifying the selected one
@@ -337,7 +359,10 @@ def sort_playlist(
     if sort_key == "shuffle":
         random.shuffle(items)
     else:
-        items.sort(key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key), reverse=sort_reverse)
+        sorted(items, key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key), reverse=sort_reverse)
+
+        if secondary_sort_key and playlist.playlistType == "audio":
+            sorted(items, key=lambda x: getattr(x, secondary_sort_key) if getattr(x, secondary_sort_key) is not None else getattr(x, backup_secondary_sort_key), reverse=sort_reverse)
 
     print()
 
@@ -385,7 +410,7 @@ if __name__ == '__main__':
         playlist = choose("Select a playlist to sort", playlists, "title")
 
         # Select the sorting method
-        sort_key, backup_sort_key, sort_reverse = choose_sorting_method(playlist)
+        sort_key, backup_sort_key, secondary_sort_key, backup_secondary_sort_key, sort_reverse = choose_sorting_method(playlist)
 
         # Decide on duplicating the selected playlist
         duplicate = choose_duplication()
@@ -396,6 +421,8 @@ if __name__ == '__main__':
             playlist=playlist,
             sort_key=sort_key,
             backup_sort_key=backup_sort_key,
+            secondary_sort_key=secondary_sort_key,
+            backup_secondary_sort_key=backup_secondary_sort_key,
             sort_reverse=sort_reverse,
             duplicate=duplicate,
         )
