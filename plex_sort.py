@@ -356,20 +356,20 @@ def sort_playlist(
     if sort_key == "shuffle":
         random.shuffle(items)
     else:
-        sorted(
-            items,
-            key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key),
-            reverse=sort_reverse,
-        )
-
         if secondary_sort_key and playlist.playlistType == "audio":
-            sorted(
+            items = sorted(
                 items,
                 key=lambda x: getattr(x, secondary_sort_key)
                 if getattr(x, secondary_sort_key) is not None
                 else getattr(x, backup_secondary_sort_key),
                 reverse=sort_reverse,
             )
+
+        items = sorted(
+            items,
+            key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key),
+            reverse=sort_reverse,
+        )
 
     print()
 
