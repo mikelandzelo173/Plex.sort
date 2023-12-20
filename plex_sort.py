@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """A simple script that lets you log into your Plex account and select a playlist to sort.
 
@@ -39,7 +38,6 @@ https://github.com/uswemar/PlexPlaylistSorter
 import os
 import random
 import sys
-
 from getpass import getpass
 
 from plexapi import PlexConfig
@@ -48,7 +46,6 @@ from plexapi.myplex import MyPlexAccount, MyPlexResource
 from plexapi.playlist import Playlist
 from plexapi.server import PlexServer
 from plexapi.utils import choose
-
 
 __author__ = "Michael Pölzl"
 __copyright__ = "Copyright 2022-2023, Michael Pölzl"
@@ -149,7 +146,7 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
                     "secondary_key": "originalTitle",
                     "secondary_backup_key": "grandparentTitle",
                 },
-            ]
+            ],
         )
     elif playlist_type == "video":
         choices.extend(
@@ -159,7 +156,7 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
                     "key": "year",
                     "secondary_key": "title",
                 },
-            ]
+            ],
         )
 
     choices.extend(
@@ -173,7 +170,7 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
                 "name": "Shuffle randomly",
                 "key": "shuffle",
             },
-        ]
+        ],
     )
 
     print()
@@ -320,14 +317,14 @@ def get_resources(account: MyPlexAccount) -> list[MyPlexResource]:
 
 
 def sort_playlist(
-        server: PlexServer,
-        playlist: Playlist,
-        sort_key: str = "title",
-        backup_sort_key: str = "title",
-        secondary_sort_key: str = "title",
-        backup_secondary_sort_key: str = "title",
-        sort_reverse: bool = False,
-        duplicate: bool = False
+    server: PlexServer,
+    playlist: Playlist,
+    sort_key: str = "title",
+    backup_sort_key: str = "title",
+    secondary_sort_key: str = "title",
+    backup_secondary_sort_key: str = "title",
+    sort_reverse: bool = False,
+    duplicate: bool = False,
 ) -> Playlist:
     """
     Function: sort_playlist()
@@ -359,10 +356,20 @@ def sort_playlist(
     if sort_key == "shuffle":
         random.shuffle(items)
     else:
-        sorted(items, key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key), reverse=sort_reverse)
+        sorted(
+            items,
+            key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key),
+            reverse=sort_reverse,
+        )
 
         if secondary_sort_key and playlist.playlistType == "audio":
-            sorted(items, key=lambda x: getattr(x, secondary_sort_key) if getattr(x, secondary_sort_key) is not None else getattr(x, backup_secondary_sort_key), reverse=sort_reverse)
+            sorted(
+                items,
+                key=lambda x: getattr(x, secondary_sort_key)
+                if getattr(x, secondary_sort_key) is not None
+                else getattr(x, backup_secondary_sort_key),
+                reverse=sort_reverse,
+            )
 
     print()
 
@@ -390,7 +397,7 @@ def sort_playlist(
         return playlist
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Load configuration
     config = get_config()
 
@@ -410,7 +417,9 @@ if __name__ == '__main__':
         playlist = choose("Select a playlist to sort", playlists, "title")
 
         # Select the sorting method
-        sort_key, backup_sort_key, secondary_sort_key, backup_secondary_sort_key, sort_reverse = choose_sorting_method(playlist)
+        sort_key, backup_sort_key, secondary_sort_key, backup_secondary_sort_key, sort_reverse = choose_sorting_method(
+            playlist,
+        )
 
         # Decide on duplicating the selected playlist
         duplicate = choose_duplication()
