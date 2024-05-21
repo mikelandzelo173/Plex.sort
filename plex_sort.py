@@ -46,6 +46,7 @@ from plexapi.myplex import MyPlexAccount, MyPlexResource
 from plexapi.playlist import Playlist
 from plexapi.server import PlexServer
 from plexapi.utils import choose
+from unidecode import unidecode
 
 __author__ = "Michael Pölzl"
 __copyright__ = "Copyright 2022-2023, Michael Pölzl"
@@ -55,6 +56,39 @@ __version__ = "1.3.0"
 __maintainer__ = "Michael Pölzl"
 __email__ = "git@michaelpoelzl.at"
 __status__ = "Production"
+
+
+def sortable_term(term: str) -> str:
+    """
+    Function: sortable_term()
+
+    Transforms the provided term to a sortable string by removing articles and changing it to lowercase.
+    It also transliterates the term.
+
+    :param term: Term to sort by
+    :type term: str
+    :returns: Manipulated string to be used for sorting
+    :rtype: str
+    """
+    term = term.lower()
+
+    term = unidecode(term)
+
+    articles = [
+        "die", "der", "das", "ein", "eine",  # German
+        "the", "a", "an",  # English
+        "el", "la", "los", "las", "un", "una", "unos", "unas",  # Spanish
+        "le", "la", "les", "un", "une", "des",  # French
+        "il", "lo", "la", "i", "gli", "un", "una", "uno",  # Italian
+    ]
+
+    words = term.split(" ")
+
+    if len(words) > 1 and words[0] in articles:
+        words.pop(0)
+        term = " ".join(words)
+
+    return term.strip()
 
 
 def choose_continue() -> bool:
@@ -359,15 +393,17 @@ def sort_playlist(
         if secondary_sort_key and playlist.playlistType == "audio":
             items = sorted(
                 items,
-                key=lambda x: getattr(x, secondary_sort_key)
+                key=lambda x: sortable_term(getattr(x, secondary_sort_key))
                 if getattr(x, secondary_sort_key) is not None
-                else getattr(x, backup_secondary_sort_key),
+                else sortable_term(getattr(x, backup_secondary_sort_key)),
                 reverse=sort_reverse,
             )
 
         items = sorted(
             items,
-            key=lambda x: getattr(x, sort_key) if getattr(x, sort_key) is not None else getattr(x, backup_sort_key),
+            key=lambda x: sortable_term(getattr(x, sort_key))
+            if getattr(x, sort_key) is not None
+            else sortable_term(getattr(x, backup_sort_key)),
             reverse=sort_reverse,
         )
 
