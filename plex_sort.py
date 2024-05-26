@@ -37,6 +37,7 @@ https://github.com/uswemar/PlexPlaylistSorter
 
 import os
 import random
+import re
 import sys
 from getpass import getpass
 
@@ -49,10 +50,10 @@ from plexapi.utils import choose
 from unidecode import unidecode
 
 __author__ = "Michael Pölzl"
-__copyright__ = "Copyright 2022-2023, Michael Pölzl"
+__copyright__ = "Copyright 2022-2024, Michael Pölzl"
 __credits__ = ""
 __license__ = "GPL"
-__version__ = "1.3.0"
+__version__ = "1.4.1"
 __maintainer__ = "Michael Pölzl"
 __email__ = "git@michaelpoelzl.at"
 __status__ = "Production"
@@ -63,7 +64,7 @@ def sortable_term(term: str) -> str:
     Function: sortable_term()
 
     Transforms the provided term to a sortable string by removing articles and changing it to lowercase.
-    It also transliterates the term.
+    It also transliterates the term and changes or removes certain characters.
 
     :param term: Term to sort by
     :type term: str
@@ -87,6 +88,10 @@ def sortable_term(term: str) -> str:
     if len(words) > 1 and words[0] in articles:
         words.pop(0)
         term = " ".join(words)
+
+    term = term.replace("&", "and")
+
+    term = re.sub(r"[*.:,;…'\"/\\!?$()=+#<>|‘“¡¿´`]", "", term)
 
     return term.strip()
 
