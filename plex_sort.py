@@ -39,7 +39,9 @@ import os
 import random
 import re
 import sys
+import datetime
 from getpass import getpass
+from typing import Union
 
 from plexapi import PlexConfig
 from plexapi.exceptions import Unauthorized
@@ -59,7 +61,7 @@ __email__ = "git@michaelpoelzl.at"
 __status__ = "Production"
 
 
-def sortable_term(term: str) -> str:
+def sortable_term(term: Union[str, datetime.datetime]) -> str:
     """
     Function: sortable_term()
 
@@ -67,12 +69,14 @@ def sortable_term(term: str) -> str:
     It also transliterates the term and changes or removes certain characters.
 
     :param term: Term to sort by
-    :type term: str
+    :type term: str or datetime.datetime
     :returns: Manipulated string to be used for sorting
     :rtype: str
     """
-    term = term.lower()
-
+    if isinstance(term, datetime.datetime):
+        return term.isoformat()
+    
+    term = str(term).lower()
     term = unidecode(term)
 
     articles = [
@@ -90,7 +94,6 @@ def sortable_term(term: str) -> str:
         term = " ".join(words)
 
     term = term.replace("&", "and")
-
     term = re.sub(r"[*.:,;…'\"/\\!?$()=+#<>|‘“¡¿´`]", "", term)
 
     return term.strip()
@@ -195,6 +198,11 @@ def choose_sorting_method(playlist: Playlist) -> tuple:
                     "key": "year",
                     "secondary_key": "title",
                 },
+                {
+                    "name": "Originally Available At",
+                    "key": "originallyAvailableAt",
+                    "secondary_key": "title",
+                }
             ],
         )
 
